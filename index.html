@@ -31,33 +31,55 @@
 <a-scene
   mindar-image="imageTargetSrc: targets.mind;"
   embedded
+  renderer="colorManagement: true; physicallyCorrectLights: false"
   vr-mode-ui="enabled: false"
   device-orientation-permission-ui="enabled: false">
 
   <a-assets>
-    <video id="vid" src="video.mp4" loop muted playsinline></video>
+    <video
+      id="video"
+      src="video.mp4"
+      loop
+      muted
+      playsinline
+      crossorigin="anonymous">
+    </video>
   </a-assets>
 
   <a-camera position="0 0 0"></a-camera>
 
   <a-entity mindar-image-target="targetIndex: 0">
-    <a-video src="#vid" width="1" height="0.56"></a-video>
+    <a-plane
+      width="1"
+      height="0.56"
+      material="shader: flat; src: #video">
+    </a-plane>
   </a-entity>
 
 </a-scene>
 
 <script>
-  const btn = document.getElementById("start");
-  const video = document.querySelector("#vid");
+  const startButton = document.getElementById("start");
+  const video = document.getElementById("video");
   const scene = document.querySelector("a-scene");
 
-  btn.onclick = () => {
-    btn.style.display = "none";
-    scene.components["mindar-image"].start();
-  };
+  startButton.addEventListener("click", async () => {
+    startButton.style.display = "none";
 
-  scene.addEventListener("targetFound", () => video.play());
-  scene.addEventListener("targetLost", () => video.pause());
+    // REQUIRED for mobile autoplay
+    await video.play();
+    video.pause();
+
+    scene.components["mindar-image"].start();
+  });
+
+  scene.addEventListener("targetFound", () => {
+    video.play();
+  });
+
+  scene.addEventListener("targetLost", () => {
+    video.pause();
+  });
 </script>
 
 </body>

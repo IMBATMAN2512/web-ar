@@ -2,124 +2,155 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport"
+        content="width=device-width,
+                 initial-scale=1.0,
+                 maximum-scale=1.0,
+                 user-scalable=no" />
+
   <title>Final WebAR Video</title>
 
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    body { margin: 0; overflow: hidden; font-family: sans-serif; background: #000; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      font-family: sans-serif;
+    }
 
-    /* The Overlay UI */
     #ui-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      position: fixed;
+      inset: 0;
       background: rgba(0,0,0,0.85);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      z-index: 10000; color: white; text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      color: white;
+      text-align: center;
     }
 
     #start-btn {
-      padding: 15px 40px; font-size: 1.2rem; cursor: pointer;
-      background: #00d1b2; color: white; border: none; border-radius: 50px;
-      font-weight: bold; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,209,178,0.4);
+      padding: 15px 40px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      background: #00d1b2;
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-weight: bold;
+      margin-top: 20px;
+      box-shadow: 0 4px 15px rgba(0,209,178,0.4);
     }
 
-    /* Scanning indicator */
     #scanning-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      display: none; align-items: center; justify-content: center;
-      z-index: 9999; pointer-events: none;
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      pointer-events: none;
     }
+
     .scanner-line {
-      width: 70%; height: 2px; background: #00d1b2;
-      box-shadow: 0 0 15px #00d1b2; position: absolute;
+      width: 70%;
+      height: 2px;
+      background: #00d1b2;
+      box-shadow: 0 0 15px #00d1b2;
+      position: absolute;
       animation: scan 2s linear infinite;
     }
+
     @keyframes scan {
-      0% { top: 20%; } 50% { top: 80%; } 100% { top: 20%; }
+      0% { top: 20%; }
+      50% { top: 80%; }
+      100% { top: 20%; }
     }
   </style>
 </head>
 
 <body>
 
-  <div id="ui-overlay">
-    <h2>Ready for AR?</h2>
-    <p>Point your camera at the target image<br>after clicking the button.</p>
-    <button id="start-btn">START CAMERA</button>
-  </div>
+<div id="ui-overlay">
+  <h2>Ready for AR?</h2>
+  <p>Point your camera at the target image<br>after clicking the button.</p>
+  <button id="start-btn">START CAMERA</button>
+</div>
 
-  <div id="scanning-overlay">
-    <div class="scanner-line"></div>
-  </div>
+<div id="scanning-overlay">
+  <div class="scanner-line"></div>
+</div>
 
-  <a-scene 
-    mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" 
-    embedded 
-    color-space="sRGB" 
-    renderer="colorManagement: true, physicallyCorrectLights" 
-    vr-mode-ui="enabled: false" 
-    device-orientation-permission-ui="enabled: false">
+<a-scene
+  mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiScanning: no;"
+  embedded
+  renderer="antialias: true; precision: medium; physicallyCorrectLights: false"
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false">
 
-    <a-assets>
-      <video id="arVideo" src="./video.mp4" loop playsinline crossorigin="anonymous"></video>
-    </a-assets>
+  <a-assets>
+    <!-- MUST start muted -->
+    <video
+      id="arVideo"
+      src="video.mp4"
+      loop
+      muted
+      playsinline
+      crossorigin="anonymous">
+    </video>
+  </a-assets>
 
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <a-entity id="targetEntity" mindar-image-target="targetIndex: 0">
-      <a-plane 
-        id="videoPlane"
-        material="src: #arVideo; shader: flat;" 
-        position="0 0 0" 
-        height="0.5625" 
-        width="1" 
-        rotation="0 0 0">
-      </a-plane>
-    </a-entity>
-  </a-scene>
+  <a-entity id="targetEntity" mindar-image-target="targetIndex: 0">
+    <a-plane
+      id="videoPlane"
+      width="1"
+      height="0.5625"
+      material="shader: flat; src: #arVideo">
+    </a-plane>
+  </a-entity>
 
-  <script>
-    const startBtn = document.getElementById('start-btn');
-    const uiOverlay = document.getElementById('ui-overlay');
-    const scanOverlay = document.getElementById('scanning-overlay');
-    const video = document.getElementById('arVideo');
-    const sceneEl = document.querySelector('a-scene');
+</a-scene>
 
-    startBtn.addEventListener('click', () => {
-      uiOverlay.style.display = 'none';
-      scanOverlay.style.display = 'flex';
+<script>
+  const startBtn = document.getElementById('start-btn');
+  const uiOverlay = document.getElementById('ui-overlay');
+  const scanOverlay = document.getElementById('scanning-overlay');
+  const video = document.getElementById('arVideo');
+  const sceneEl = document.querySelector('a-scene');
+  const targetEntity = document.getElementById('targetEntity');
 
-      // Start MindAR
-      const arSystem = sceneEl.components['mindar-image'];
-      arSystem.start(); 
+  startBtn.addEventListener('click', async () => {
+    uiOverlay.style.display = 'none';
+    scanOverlay.style.display = 'flex';
 
-      // Mobile Video Unlock
-      video.play().then(() => {
-        video.pause(); // Pause until target is Found
-        video.muted = false; // Now allowed since user clicked "Start"
-      }).catch(e => console.log("Video wait:", e));
-    });
+    // 🔑 Mobile video unlock (CORRECT way)
+    await video.play();
+    video.pause();          // keep muted, just unlock texture
 
-    const targetEntity = document.getElementById('targetEntity');
+    sceneEl.components['mindar-image'].start();
+  });
 
-    targetEntity.addEventListener("targetFound", () => {
-      console.log("Target Found");
-      scanOverlay.style.display = 'none'; // Hide scanner when tracking
-      video.play();
-    });
+  targetEntity.addEventListener('targetFound', () => {
+    scanOverlay.style.display = 'none';
+    video.play();
+  });
 
-    targetEntity.addEventListener("targetLost", () => {
-      console.log("Target Lost");
-      scanOverlay.style.display = 'flex'; // Show scanner when searching
-      video.pause();
-    });
+  targetEntity.addEventListener('targetLost', () => {
+    scanOverlay.style.display = 'flex';
+    video.pause();
+  });
 
-    // Catch Errors (like No Camera or No HTTPS)
-    sceneEl.addEventListener("arError", (event) => {
-      alert("AR Error: Ensure you are using HTTPS and have granted camera permissions.");
-    });
-  </script>
+  sceneEl.addEventListener('arError', () => {
+    alert('AR Error: Use HTTPS and allow camera access.');
+  });
+</script>
+
 </body>
 </html>

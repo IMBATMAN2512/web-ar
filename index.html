@@ -2,105 +2,100 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-
-  <!-- IMPORTANT: keeps camera portrait, prevents cropping -->
-  <meta name="viewport"
-        content="width=device-width,
-                 height=device-height,
-                 initial-scale=1.0,
-                 maximum-scale=1.0,
-                 user-scalable=no" />
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>WebAR Image Video</title>
 
-  <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-
-  <!-- MindAR -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: black;
+    body { margin: 0; overflow: hidden; background: #000; }
+
+    #ui-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; /* Ensure it stays on top of the AR view */
+      background: rgba(0,0,0,0.7);
     }
 
-    #start {
-      position: absolute;
-      top: 45%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      padding: 16px 24px;
-      font-size: 18px;
-      background: black;
-      color: white;
-      border-radius: 8px;
-      z-index: 10;
-      border: 1px solid white;
+    #start-btn {
+      padding: 20px 40px;
+      font-size: 20px;
+      font-family: sans-serif;
+      cursor: pointer;
+      background: #fff;
+      border: none;
+      border-radius: 50px;
+      font-weight: bold;
     }
   </style>
 </head>
 
 <body>
 
-<button id="start">Start AR</button>
+<div id="ui-overlay">
+  <button id="start-btn">TAP TO START AR</button>
+</div>
 
-<a-scene
-  mindar-image="imageTargetSrc: targets.mind;"
-  embedded
-  renderer="antialias: true; precision: medium;"
-  vr-mode-ui="enabled: false"
+<a-scene 
+  mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiScanning: yes;" 
+  embedded 
+  color-space="sRGB" 
+  renderer="colorManagement: true, physicallyCorrectLights" 
+  vr-mode-ui="enabled: false" 
   device-orientation-permission-ui="enabled: false">
 
   <a-assets>
-    <!-- Video MUST be H.264 MP4 -->
-    <video
-      id="video"
-      src="video.mp4"
-      loop
-      muted
-      playsinline
-      crossorigin="anonymous">
-    </video>
+    <video id="video" src="./video.mp4" preload="auto" loop="true" playsinline crossorigin="anonymous"></video>
   </a-assets>
 
-  <a-camera position="0 0 0"></a-camera>
+  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-  <!-- Image Target -->
   <a-entity mindar-image-target="targetIndex: 0">
-
-    <!-- LANDSCAPE VIDEO (16:9) inside PORTRAIT CAMERA -->
-    <a-plane
-      width="1"
-      height="0.56"
-      material="shader: flat; src: #video">
+    <a-plane 
+      id="video-screen"
+      material="src: #video; shader: flat" 
+      position="0 0 0" 
+      height="0.5625" 
+      width="1" 
+      rotation="0 0 0">
     </a-plane>
-
   </a-entity>
-
 </a-scene>
 
 <script>
-  const startButton = document.getElementById("start");
-  const video = document.getElementById("video");
-  const scene = document.querySelector("a-scene");
+  const startBtn = document.getElementById('start-btn');
+  const overlay = document.getElementById('ui-overlay');
+  const video = document.getElementById('video');
+  const sceneEl = document.querySelector('a-scene');
 
-  startButton.addEventListener("click", async () => {
-    startButton.style.display = "none";
+  startBtn.addEventListener('click', () => {
+    overlay.style.display = 'none';
 
-    // REQUIRED for mobile video texture
-    await video.play();
-    video.pause();
+    // 1. Start the MindAR engine
+    const arSystem = sceneEl.components['mindar-image'];
+    arSystem.start(); 
 
-    scene.components["mindar-image"].start();
+    // 2. Initial video "kick" to satisfy mobile browser audio/video policy
+    video.play().then(() => {
+      video.pause(); // Pause until target is found
+      video.muted = false; // Now that we have user interaction, we can unmute
+    }).catch((err) => {
+        console.warn("Video playback blocked or failed:", err);
+    });
   });
 
-  scene.addEventListener("targetFound", () => {
+  // Target Found Events
+  const targetEntity = document.querySelector('[mindar-image-target]');
+  
+  targetEntity.addEventListener("targetFound", () => {
+    console.log("Target Found!");
     video.play();
   });
 
-  scene.addEventListener("targetLost", () => {
+  targetEntity.addEventListener("targetLost", () => {
+    console.log("Target Lost!");
     video.pause();
   });
 </script>

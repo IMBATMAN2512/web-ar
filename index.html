@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8" />
 
-  <!-- REQUIRED for mobile camera -->
+  <!-- Force full-screen portrait -->
   <meta name="viewport"
         content="width=device-width,
+                 height=device-height,
                  initial-scale=1.0,
                  maximum-scale=1.0,
                  user-scalable=no" />
@@ -26,72 +27,44 @@
       height: 100%;
       overflow: hidden;
       background: black;
-      font-family: Arial, sans-serif;
     }
 
-    #startScreen {
+    a-scene {
+      position: fixed !important;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #start {
       position: fixed;
-      inset: 0;
-      background: black;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      z-index: 9999;
-    }
-
-    #startBtn {
-      margin-top: 20px;
-      padding: 14px 30px;
-      font-size: 18px;
-      border-radius: 30px;
-      border: none;
-      background: #00d1b2;
-      color: black;
-      font-weight: bold;
-    }
-
-    #scanLine {
-      position: fixed;
-      left: 10%;
-      width: 80%;
-      height: 2px;
-      background: #00d1b2;
       top: 50%;
-      animation: scan 2s linear infinite;
-      display: none;
-      z-index: 5000;
-    }
-
-    @keyframes scan {
-      0% { top: 20%; }
-      50% { top: 80%; }
-      100% { top: 20%; }
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 16px 26px;
+      font-size: 18px;
+      background: black;
+      color: white;
+      border: 1px solid white;
+      border-radius: 8px;
+      z-index: 999;
     }
   </style>
 </head>
 
 <body>
 
-<!-- START SCREEN -->
-<div id="startScreen">
-  <h2>WebAR Ready</h2>
-  <p>Tap start and allow camera access</p>
-  <button id="startBtn">START CAMERA</button>
-</div>
-
-<div id="scanLine"></div>
+<button id="start">Start AR</button>
 
 <a-scene
+  mindar-image="imageTargetSrc: targets.mind;"
   embedded
-  mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiScanning: no;"
-  renderer="antialias: true; precision: medium"
+  renderer="antialias: true; precision: medium;"
   vr-mode-ui="enabled: false"
   device-orientation-permission-ui="enabled: false">
 
   <a-assets>
-    <!-- MUST be H.264 MP4 -->
     <video
       id="video"
       src="video.mp4"
@@ -102,59 +75,43 @@
     </video>
   </a-assets>
 
-  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+  <a-camera position="0 0 0"></a-camera>
 
-  <a-entity id="imageTarget" mindar-image-target="targetIndex: 0">
+  <!-- Image target -->
+  <a-entity mindar-image-target="targetIndex: 0">
+
+    <!-- Landscape video (16:9) -->
     <a-plane
       width="1"
       height="0.56"
       material="shader: flat; src: #video">
     </a-plane>
+
   </a-entity>
 
 </a-scene>
 
 <script>
-  const startBtn = document.getElementById('startBtn');
-  const startScreen = document.getElementById('startScreen');
-  const scanLine = document.getElementById('scanLine');
-  const video = document.getElementById('video');
-  const sceneEl = document.querySelector('a-scene');
-  const target = document.getElementById('imageTarget');
+  const startBtn = document.getElementById("start");
+  const video = document.getElementById("video");
+  const scene = document.querySelector("a-scene");
 
-  startBtn.addEventListener('click', async () => {
-    startScreen.style.display = 'none';
-    scanLine.style.display = 'block';
+  startBtn.addEventListener("click", async () => {
+    startBtn.style.display = "none";
 
-    // 🔑 REQUIRED mobile video unlock
-    try {
-      await video.play();
-      video.pause();
-    } catch (e) {
-      console.log("Video unlock failed:", e);
-    }
+    // Required for mobile video texture
+    await video.play();
+    video.pause();
 
-    // 🔑 Start AR only after user click
-    sceneEl.components['mindar-image'].start();
+    scene.components["mindar-image"].start();
   });
 
-  target.addEventListener('targetFound', () => {
-    scanLine.style.display = 'none';
+  scene.addEventListener("targetFound", () => {
     video.play();
   });
 
-  target.addEventListener('targetLost', () => {
-    scanLine.style.display = 'block';
+  scene.addEventListener("targetLost", () => {
     video.pause();
-  });
-
-  sceneEl.addEventListener('arError', (e) => {
-    alert(
-      "Camera error.\n\n" +
-      "• Use HTTPS\n" +
-      "• Open in Chrome\n" +
-      "• Allow camera permission\n"
-    );
   });
 </script>
 
